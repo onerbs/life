@@ -4,7 +4,6 @@ const CELLS = 20
 /** the number of renders per second */
 const RPS = 5
 
-
 // handle mouse events
 let mouseIsDown = false
 let givingLife = false
@@ -27,7 +26,6 @@ document.body.addEventListener('mouseup', () => {
   givingLife = false
 })
 
-
 /** Create a new size*size matrix */
 function matrix(size: number): number[][] {
   let res = new Array(size)
@@ -45,37 +43,22 @@ function copy(source: number[][]): number[][] {
 }
 
 /**
- * fit n between range [min, max]
+ * fit n between range [0, CELLS - 1]
  * @param n the target number
- * @param min the minimum allowed value (inclusive)
- * @param max the maximum allowed value (inclusive)
  */
-function fit(n: number, min: number, max: number) {
-  if (min === max) return min
-  if (max < min) [min, max] = [max, min]
-  const delta = max - min + (min === 0 ? 1 : 0)
-  while (n < min) n += delta
-  while (n > max) n -= delta
+function fit(n: number) {
+  while (n < 0) n += CELLS
+  while (n > CELLS - 1) n -= CELLS
   return n
 }
-/**
- * fit n between 0 and CELLS - 1
- * @param n the target number
- * @see {@link fit}
- */
-function fitt(n: number) {
-  return fit(n, 0, CELLS - 1)
-}
 
-/**
- * The representation of a Cell
- */
+/** The representation of a Cell */
 class Cell {
   alive: boolean
   coord: { x: number, y: number }
 
   /**
-   * @param state the state of the cell. 1 == alive, 0 == not alive.
+   * @param state the state of the cell. 0 = dead; 1 = alive.
    * @param x the X axis coordinate
    * @param y the Y axis coordinate
    */
@@ -85,7 +68,7 @@ class Cell {
   }
 
   /** Create a span element with the data of this cell */
-  to_span(): HTMLSpanElement {
+  spany(): HTMLSpanElement {
     const span = document.createElement('span')
     if (this.alive) span.classList.add('alive')
     // allow continuous painting
@@ -113,10 +96,10 @@ class ArrayOfCells {
   }
 
   /** Create an array of span elements */
-  to_span(): HTMLSpanElement[] {
+  spany(): HTMLSpanElement[] {
     let res: HTMLSpanElement[] = []
     for (let cell of this.data)
-      res.push(cell.to_span())
+      res.push(cell.spany())
     return res
   }
 }
@@ -144,14 +127,14 @@ class Board {
       for (let x = 0; x < CELLS; x++) {
         // calculate the number of live neighbors
         let neighbors: number = (
-            this.state[fitt(y - 1)][fitt(x - 1)]
-          + this.state[fitt(y - 1)][x]
-          + this.state[fitt(y - 1)][fitt(x + 1)]
-          + this.state[y]          [fitt(x - 1)]
-          + this.state[y]          [fitt(x + 1)]
-          + this.state[fitt(y + 1)][fitt(x - 1)]
-          + this.state[fitt(y + 1)][x]
-          + this.state[fitt(y + 1)][fitt(x + 1)]
+            this.state[fit(y - 1)][fit(x - 1)]
+          + this.state[fit(y - 1)][x]
+          + this.state[fit(y - 1)][fit(x + 1)]
+          + this.state[y]         [fit(x - 1)]
+          + this.state[y]         [fit(x + 1)]
+          + this.state[fit(y + 1)][fit(x - 1)]
+          + this.state[fit(y + 1)][x]
+          + this.state[fit(y + 1)][fit(x + 1)]
         )
 
         // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
@@ -176,7 +159,7 @@ class Board {
       })
     })
     this.self.innerHTML = ""
-    this.self.append(...cells.to_span())
+    this.self.append(...cells.spany())
   }
 }
 
