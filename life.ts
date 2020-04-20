@@ -4,33 +4,11 @@ const CELLS = 20
 /** the number of renders per second */
 const RPS = 5
 
-// handle mouse events
-let mouseIsDown = false
-let givingLife = false
-
-document.body.addEventListener('mousedown', e => {
-  mouseIsDown = true
-
-  // give life with left click
-  // take life with right click
-  givingLife = e.button < 2
-
-  if (e.target !== e.currentTarget) {
-    // fire this only if the target is a cell
-    (e.target as HTMLElement).classList.toggle('alive', givingLife)
-  }
-})
-
-document.body.addEventListener('mouseup', () => {
-  mouseIsDown = false
-  givingLife = false
-})
-
 /** Create a new size*size matrix */
-function matrix(size: number): number[][] {
-  let res = new Array(size)
+function matrix(size: number): boolean[][] {
+  let res: boolean[][] = new Array(size)
   for (let i = 0; i < size; i++)
-    res[i] = new Array(size).fill(0)
+    res[i] = new Array<boolean>(size).fill(false)
   return res
 }
 
@@ -38,7 +16,7 @@ function matrix(size: number): number[][] {
  * Create a copy of a matrix
  * @param source the original matrix
  */
-function copy(source: number[][]): number[][] {
+function copy<T>(source: T[][]): T[][] {
   return source.map(row => Array.from(row))
 }
 
@@ -52,9 +30,13 @@ function fit(n: number) {
   return n
 }
 
+// handle Cell mouse events
+let mouseIsDown = false
+let givingLife = false
+
 /** The representation of a Cell */
 class Cell {
-  alive: boolean
+  state: boolean
   coord: { x: number, y: number }
 
   /**
@@ -62,21 +44,31 @@ class Cell {
    * @param x the X axis coordinate
    * @param y the Y axis coordinate
    */
-  constructor(state: number, x: number, y: number) {
-    this.alive = state === 1
+  constructor(state: boolean, x: number, y: number) {
+    this.state = state
     this.coord = { x, y }
   }
 
   /** Create a span element with the data of this cell */
   spany(): HTMLSpanElement {
     const span = document.createElement('span')
-    if (this.alive) span.classList.add('alive')
-    // allow continuous painting
-    span.addEventListener('mouseover', () => {
-      if (mouseIsDown) {
-        span.classList.toggle('alive', givingLife)
+    if (this.state) span.classList.add('alive')
+    span.addEventListener('mousedown', (event) => {
+      mouseIsDown = true
+      // give life with left click
+      // take life with right click
+      givingLife = event.button < 2
+      if (event.target === event.currentTarget) {
         game.board.toggle(this.coord.x, this.coord.y, givingLife)
       }
+    })
+    // allow continuous painting
+    span.addEventListener('mouseover', () => {
+      if (mouseIsDown) game.board.toggle(this.coord.x, this.coord.y, givingLife)
+    })
+    span.addEventListener('mouseup', () => {
+      mouseIsDown = false
+      givingLife = false
     })
     return span
   }
@@ -107,42 +99,43 @@ class ArrayOfCells {
 /** The Game Board */
 class Board {
   self: HTMLDivElement
-  state: number[][]
+  state: boolean[][]
 
-  constructor(self: HTMLDivElement, state: number[][]) {
+  constructor(self: HTMLDivElement, state: boolean[][]) {
     this.self = self
     this.state = state
   }
 
   toggle(x: number, y: number, state = true) {
-    this.state[y][x] = state ? 1 : 0
+    this.state[y][x] = state
+    this.paint()
   }
 
   render() {
     // operate on a snapshot of the current state
-    let snapshot: number[][] = copy(this.state)
+    let snapshot: boolean[][] = copy(this.state)
 
     // clculate the new state
     for (let y = 0; y < CELLS; y++) {
       for (let x = 0; x < CELLS; x++) {
         // calculate the number of live neighbors
         let neighbors: number = (
-            this.state[fit(y - 1)][fit(x - 1)]
-          + this.state[fit(y - 1)][x]
-          + this.state[fit(y - 1)][fit(x + 1)]
-          + this.state[y]         [fit(x - 1)]
-          + this.state[y]         [fit(x + 1)]
-          + this.state[fit(y + 1)][fit(x - 1)]
-          + this.state[fit(y + 1)][x]
-          + this.state[fit(y + 1)][fit(x + 1)]
+            Number(this.state[fit(y - 1)][fit(x - 1)])
+          + Number(this.state[fit(y - 1)][x])
+          + Number(this.state[fit(y - 1)][fit(x + 1)])
+          + Number(this.state[y]         [fit(x - 1)])
+          + Number(this.state[y]         [fit(x + 1)])
+          + Number(this.state[fit(y + 1)][fit(x - 1)])
+          + Number(this.state[fit(y + 1)][x])
+          + Number(this.state[fit(y + 1)][fit(x + 1)])
         )
 
         // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
-        if (snapshot[y][x] == 0 && neighbors == 3) snapshot[y][x] = 1
+        if (!snapshot[y][x] && neighbors === 3) snapshot[y][x] = true
 
         // Any live cell with fewer than two live neighbours dies, as if by underpopulation.
         // Any live cell with more than three live neighbours dies, as if by overpopulation.
-        else if (snapshot[y][x] == 1 && (neighbors < 2 || neighbors > 3)) snapshot[y][x] = 0
+        else if (snapshot[y][x] && (neighbors < 2 || neighbors > 3)) snapshot[y][x] = false
       }
     }
     // update the actual state
@@ -168,7 +161,7 @@ class GameOfLife {
   board: Board
   isPaused: boolean
   control: HTMLDivElement
-  interval: any
+  interval: number
 
   constructor() {
     // create the root element
