@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "allowJs": false,
+    "pretty": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "removeComments": true
+  }
+}

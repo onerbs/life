@@ -1,0 +1,15 @@
+{
+  "name": "life",
+  "version": "1.0.0",
+  "description": "The Game of Life",
+  "scripts": {
+    "build": "yarn tsc --build"
+  },
+  "repository": "https://github.com/onerbs/life",
+  "author": "Alejandro Elí",
+  "license": "GPL-3.0-only",
+  "private": true,
+  "dependencies": {
+    "typescript": "^3.8.3"
+  }
+}

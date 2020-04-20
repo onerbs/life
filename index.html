@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+        flex-direction: column;
+      }
+      span {
+        background-color: inherit;
+        box-shadow: 0 0 0 1px #ccc;
+        /* Here you can modify the cell size */
+        height: 20px; width: 20px;
+      }
+      span.alive {
+        box-shadow: 0 0 0 1px #0000;
+        background-color: black;
+      }
+      #root {
+        box-shadow: 0 0 0 1px #ccc;
+        display: flex;
+        flex-wrap: wrap;
+      }
+      #control {
+        margin-top: 1.5em;
+        padding: 0.5em 1em;
+        background-color: lightcoral;
+        color: white;
+        cursor: pointer;
+      }
+    </style>
+    <title>Game Of Life</title>
+  </head>
+  <!-- Prevent right click menu -->
+  <body oncontextmenu='return false'>
+    <script src="life.js"></script>
+  </body>
+</html>
